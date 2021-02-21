@@ -141,7 +141,7 @@ def venues():
                 venue_detail = {
                   "id": venu.id,
                   "name": venu.name,
-                  "num_upcoming_shows": upcoming(venu)
+                  "num_upcoming_shows": len(upcoming(venu))
                 }
                 result['venues'].append(venue_detail)
             else:
@@ -155,7 +155,7 @@ def venues():
                 venue_detail ={
                   "id": venu.id,
                   "name": venu.name,
-                  "num_upcoming_shows": upcoming(venu)
+                  "num_upcoming_shows": len(upcoming(venu))
                 }
                 result["venues"].append(venue_detail)
         else:
@@ -182,13 +182,21 @@ def search_venues():
       # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
       # seach for Hop should return "The Musical Hop".
       # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-      response={
-        "count": 1,
-        "data": [{
-          "id": 2,
-          "name": "The Dueling Pianos Bar",
-          "num_upcoming_shows": 0,
-        }]
+      term = f"%{request.form.get('search_term')}%"
+      result = Venue.query.filter(Venue.name.ilike(term)).all()
+      data = list()
+      count = 0
+      for venue in result:
+          artist_dict = {
+              "id": venue.id,
+              "name": venue.name,
+              "num_upcoming_shows": len(future(venue))
+          }
+          data.append(artist_dict)
+          count += 1
+      response = {
+          "count": count,
+          "data": data
       }
       return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -237,6 +245,10 @@ def create_venue_submission():
     venue.phone = request.form.get('phone')
     venue.genres = request.form.getlist('genres')
     venue.facebook_link = request.form.get("facebook_link")
+    venue.website_link = request.form.get('website_link')
+    venue.image_link = request.form.get('image_link')
+    venue.seeking_talent = bool(request.form.get('is_seeking'))
+    venue.seeking_description = request.form.get('seeking_description')
 
     try:
         db.session.add(venue)
@@ -361,12 +373,17 @@ def edit_artist_submission(artist_id):
     artist.city = request.form.get('city')
     artist.state = request.form.get('state')
     artist.genres = request.form.getlist('genres')
-    artist.facebook_link = request.form.get('facebook_link')
     artist.phone = request.form.get('phone')
+    artist.website_link = request.form.get('website_link')
+    artist.image_link = request.form.get('image_link')
+    artist.seeking_venue = bool(request.form.get('is_seeking'))
+    artist.seeking_description = request.form.get('seeking_description')
+    artist.facebook_link = request.form.get("facebook_link")
+
     try:
       db.session.commit()
       flash('Artist ' + artist.name + ' was successfully updated!')
-    except:
+    except :
         db.session.rollback()
         flash('Artist ' + artist.name + ' was not updated!')
         return render_template('errors/500.html'), 500
@@ -396,22 +413,29 @@ def edit_venue(venue_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-    venue = Venue()
+    venue = Venue.query.get_or_404(venue_id)
+
     venue.name = request.form.get('name')
     venue.city = request.form.get('city')
     venue.state = request.form.get("state")
     venue.address = request.form.get('state')
     venue.phone = request.form.get('phone')
     venue.genres = request.form.getlist('genres')
+    venue.website_link = request.form.get('website_link')
+    venue.image_link = request.form.get('image_link')
+    venue.seeking_talent =bool(request.form.get('is_seeking'))
+    venue.seeking_description = request.form.get('seeking_description')
     venue.facebook_link = request.form.get("facebook_link")
+    venue_id = venue.id
     try:
         db.session.commit()
         flash('Venue ' + venue.name + ' was successfully updated!')
-    except:
+    except Exception as e :
+        print(e)
         db.session.rollback()
         flash('Venue ' + venue.name + ' wasn\'t updated!')
         return render_template('errors/500.html'), 500
-    return redirect(url_for('show_venue', venue_id=venue.id))
+    return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
 #  ----------------------------------------------------------------
@@ -424,18 +448,23 @@ def create_artist_form():
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
     artist = Artist()
+
     artist.name = request.form.get('name')
     artist.city = request.form.get('city')
     artist.state = request.form.get('state')
     artist.genres = request.form.getlist('genres')
-    artist.facebook_link = request.form.get('facebook_link')
     artist.phone = request.form.get('phone')
-
+    artist.website_link = request.form.get('website_link')
+    artist.image_link = request.form.get('image_link')
+    artist.seeking_talent = bool(request.form.get('is_seeking'))
+    artist.seeking_description = request.form.get('seeking_description')
+    artist.facebook_link = request.form.get("facebook_link")
     try:
         db.session.add(artist)
         db.session.commit()
         flash('Artist ' + artist.name + ' was successfully listed!')
-    except:
+    except Exception as e :
+        print(e)
         db.session.rollback()
         flash('An error occurred. Artist ' + request.form.get("name") + ' could not be listed.')
         return render_template('errors/500.html'), 500

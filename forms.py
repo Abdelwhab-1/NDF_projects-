@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms.validators import DataRequired, AnyOf, URL, Length
 
 class ShowForm(Form):
     artist_id = StringField(
@@ -22,6 +22,14 @@ class VenueForm(Form):
     )
     city = StringField(
         'city', validators=[DataRequired()]
+    )
+    is_seeking = SelectField(
+        'is seeking', validators=[DataRequired()],
+        choices=[(False, False),
+                 (True, True)]
+    )
+    seeking_description = StringField(
+        'seeking descreption',
     )
     state = SelectField(
         'state', validators=[DataRequired()],
@@ -78,6 +86,13 @@ class VenueForm(Form):
             ('WI', 'WI'),
             ('WY', 'WY'),
         ]
+    )
+
+    image_link = StringField(
+        'image_link', validators=[DataRequired(), Length(min=5, max=120, message='at most 120 letter not more'), URL()]
+    )
+    website_link = StringField(
+        'image_link', validators=[DataRequired(), Length(min=5, max=120), URL()]
     )
     address = StringField(
         'address', validators=[DataRequired()]
@@ -180,12 +195,23 @@ class ArtistForm(Form):
             ('WY', 'WY'),
         ]
     )
+    is_seeking = SelectField(
+        'is seeking', validators=[DataRequired()],
+        choices=[(False, False),
+                 (True, True)]
+    )
+    seeking_description = StringField(
+        'seeking descreption',
+    )
     phone = StringField(
         # TODO implement validation logic for state
-        'phone'
+        'phone', validators=[DataRequired()]
     )
     image_link = StringField(
-        'image_link'
+        'image_link', validators=[DataRequired(), Length(min=5, max=120, message='at most 120 letter not more'), URL()]
+    )
+    website_link = StringField(
+        'image_link', validators=[DataRequired(), Length(min=5, max=120), URL()]
     )
     genres = SelectMultipleField(
         # TODO implement enum restriction
@@ -214,7 +240,7 @@ class ArtistForm(Form):
     )
     facebook_link = StringField(
         # TODO implement enum restriction
-        'facebook_link', validators=[URL()]
+        'facebook_link', validators=[DataRequired(),Length(min=5, max=120, message='to long muximum number is 120 character'),URL()]
     )
 
 # TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
